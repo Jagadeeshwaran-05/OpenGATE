@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="OpenGATE Syllabus Explorer - Interactive study maps, checklists, and guides for GATE DA and GATE CS.">
+  <meta name="theme-color" content="#07111f">
+  <title>OpenGATE · Syllabus Explorer Portal</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="OpenGATE home">
+      <span class="brand-mark">OG</span>
+      <span>
+        <strong>OpenGATE</strong>
+        <small>Study Portal</small>
+      </span>
+    </a>
+    <nav class="top-actions" aria-label="Primary">
+      <button class="button quiet" id="theme-toggle" aria-label="Toggle color theme">
+        <span aria-hidden="true">◐</span>
+        <span class="button-label">Theme</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="welcome-container">
+    <section class="welcome-hero">
+      <span class="eyebrow">Interactive Study Portal</span>
+      <h1>Welcome to <em>OpenGATE.</em></h1>
+      <p>Select your paper to explore official syllabi, track progress, save custom study notes, and browse comprehensive subject memory maps.</p>
+    </section>
+
+    <section class="portal-grid">
+      <!-- GATE DA CARD -->
+      <article class="portal-card da-portal-card">
+        <header class="portal-card-header">
+          <span class="portal-badge">PAPER CODE: DA</span>
+          <span class="portal-icon">◎</span>
+        </header>
+        <h2>Data Science &amp; AI</h2>
+        <p>A structured path through 7 subjects: from mathematical foundations (Probability, Linear Algebra, Calculus) to Intelligent Systems (DBMS, ML, AI).</p>
+        <ul class="portal-features">
+          <li><span>✓</span> 7 Core Subjects</li>
+          <li><span>✓</span> Interactive Radial Mind Map</li>
+          <li><span>✓</span> Study Notes &amp; Active Recall</li>
+          <li><span>✓</span> Curated Resource Lists</li>
+        </ul>
+        <a href="/explorer/da" class="button primary large portal-action">Explore GATE DA Syllabus →</a>
+      </article>
+
+      <!-- GATE CS CARD -->
+      <article class="portal-card cs-portal-card">
+        <header class="portal-card-header">
+          <span class="portal-badge">PAPER CODE: CS</span>
+          <span class="portal-icon">⛶</span>
+        </header>
+        <h2>Computer Science &amp; IT</h2>
+        <p>Master 10 core subjects: Programming, Data Structures, Algorithms, Automata, Compilers, OS, DBMS, Digital Design, COA, and Networks.</p>
+        <ul class="portal-features">
+          <li><span>✓</span> 10 Core Subjects</li>
+          <li><span>✓</span> Comprehensive Study Checklist</li>
+          <li><span>✓</span> Hand-written RBR &amp; ME Notes</li>
+          <li><span>✓</span> Private Lecture Reference Index</li>
+        </ul>
+        <a href="/explorer/cs" class="button primary large portal-action" style="--accent: #a855f7; border-color: #a855f7;">Explore GATE CS Syllabus →</a>
+      </article>
+    </section>
+
+    <footer class="portal-footer">
+      <p>Built for GATE aspirants. Free, open-source, and offline-first syllabus tracker.</p>
+    </footer>
+  </main>
+
+  <script>
+    const themeKey = "dsai-gate-theme";
+    const themeToggle = document.querySelector("#theme-toggle");
+
+    function initTheme() {
+      const storedTheme = localStorage.getItem(themeKey);
+      const isDark = storedTheme === "dark" || (!storedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (isDark) {
+        document.body.classList.add("dark");
+      } else {
+        document.body.classList.remove("dark");
+      }
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const isDark = document.body.classList.toggle("dark");
+      localStorage.setItem(themeKey, isDark ? "dark" : "light");
+    });
+
+    initTheme();
+  </script>
+</body>
+</html>
