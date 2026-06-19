@@ -1,0 +1,6 @@
+outs:
+- md5: 7dc7c58c3b58e715e8574ec8bbce295b.dir
+  size: 248230103
+  nfiles: 94
+  hash: md5
+  path: cse-gate

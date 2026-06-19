@@ -1,0 +1,6 @@
+outs:
+- md5: c4827d8afd0ee9666cb553ad4d33e145.dir
+  size: 52459754
+  nfiles: 87
+  hash: md5
+  path: dsai-gate

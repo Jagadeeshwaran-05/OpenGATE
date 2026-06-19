@@ -1,0 +1,6 @@
+outs:
+- md5: 8b96056146bfe34ad5483ba0dccad2b1.dir
+  size: 43856
+  nfiles: 11
+  hash: md5
+  path: general-info
