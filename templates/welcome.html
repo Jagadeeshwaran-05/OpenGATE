@@ -8,7 +8,7 @@
   <title>OpenGATE · Syllabus Explorer Portal</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -52,7 +52,10 @@
           <li><span>✓</span> Study Notes &amp; Active Recall</li>
           <li><span>✓</span> Curated Resource Lists</li>
         </ul>
-        <a href="/explorer/da" class="button primary large portal-action">Explore GATE DA Syllabus →</a>
+        <div class="portal-actions-container" style="display: flex; gap: 10px; margin-top: auto; width: 100%;">
+          <a href="/explorer/da" class="button primary large portal-action" style="flex: 1; margin: 0;">Explore Syllabus →</a>
+          <a href="/syllabus/da" target="_blank" class="button quiet large" style="flex: 0 0 50px; padding: 0; margin: 0;" title="Download Official Syllabus PDF">📥</a>
+        </div>
       </article>
 
       <!-- GATE CS CARD -->
@@ -69,7 +72,10 @@
           <li><span>✓</span> Hand-written RBR &amp; ME Notes</li>
           <li><span>✓</span> Private Lecture Reference Index</li>
         </ul>
-        <a href="/explorer/cs" class="button primary large portal-action" style="--accent: #a855f7; border-color: #a855f7;">Explore GATE CS Syllabus →</a>
+        <div class="portal-actions-container" style="display: flex; gap: 10px; margin-top: auto; width: 100%;">
+          <a href="/explorer/cs" class="button primary large portal-action" style="--accent: #a855f7; border-color: #a855f7; flex: 1; margin: 0;">Explore Syllabus →</a>
+          <a href="/syllabus/cs" target="_blank" class="button quiet large" style="flex: 0 0 50px; padding: 0; margin: 0;" title="Download Official Syllabus PDF">📥</a>
+        </div>
       </article>
     </section>
 

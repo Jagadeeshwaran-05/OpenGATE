@@ -8,5 +8,8 @@ dependencies = [
     "fastapi>=0.110.0",
     "uvicorn>=0.28.0",
     "jinja2>=3.1.0",
+    "dagshub>=0.7.0",
+    "dvc>=3.67.1",
+    "dvc-s3>=3.3.0",
 ]
 

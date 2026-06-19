@@ -2,7 +2,7 @@ import os
 import re
 import sqlite3
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -570,6 +570,20 @@ class CustomNode(BaseModel):
     parent: str
     title: str
     url: Optional[str] = ""
+
+@app.get("/syllabus/da")
+async def get_da_syllabus():
+    pdf_path = os.path.join(DSAI_GATE_DIR, "da-syllabus.pdf")
+    if os.path.exists(pdf_path):
+        return FileResponse(pdf_path, media_type="application/pdf", filename="da-syllabus.pdf")
+    raise HTTPException(status_code=404, detail="Syllabus PDF not found")
+
+@app.get("/syllabus/cs")
+async def get_cs_syllabus():
+    pdf_path = os.path.join(CSE_GATE_DIR, "cs-syllabus.pdf")
+    if os.path.exists(pdf_path):
+        return FileResponse(pdf_path, media_type="application/pdf", filename="cs-syllabus.pdf")
+    raise HTTPException(status_code=404, detail="Syllabus PDF not found")
 
 # Welcome Page Route
 @app.get("/", response_class=HTMLResponse)

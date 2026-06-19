@@ -63,13 +63,13 @@ body {
 }
 
 body.dark {
-  background-image: 
+  background-image:
     radial-gradient(circle at 10% 20%, rgba(13, 20, 47, 0.6) 0%, transparent 40%),
     radial-gradient(circle at 90% 80%, rgba(8, 27, 43, 0.5) 0%, transparent 40%);
 }
 
 body:not(.dark) {
-  background-image: 
+  background-image:
     radial-gradient(circle at 10% 20%, rgba(99, 91, 255, 0.03) 0%, transparent 45%),
     radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.03) 0%, transparent 45%);
 }
@@ -95,15 +95,37 @@ a {
 
 /* Ambient Background Glow elements */
 @keyframes pulseGlow {
-  0% { transform: translate(0, 0) scale(1); opacity: 0.15; }
-  50% { transform: translate(40px, -60px) scale(1.15); opacity: 0.22; }
-  100% { transform: translate(0, 0) scale(1); opacity: 0.15; }
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.15;
+  }
+
+  50% {
+    transform: translate(40px, -60px) scale(1.15);
+    opacity: 0.22;
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.15;
+  }
 }
 
 @keyframes pulseGlowTwo {
-  0% { transform: translate(0, 0) scale(1.1); opacity: 0.15; }
-  50% { transform: translate(-50px, 50px) scale(0.9); opacity: 0.24; }
-  100% { transform: translate(0, 0) scale(1.1); opacity: 0.15; }
+  0% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 0.15;
+  }
+
+  50% {
+    transform: translate(-50px, 50px) scale(0.9);
+    opacity: 0.24;
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 0.15;
+  }
 }
 
 .ambient {
@@ -191,7 +213,7 @@ a {
 .hero-actions,
 .subject-links,
 .view-controls,
-.cta-section > div {
+.cta-section>div {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -515,7 +537,7 @@ body:not(.dark) .subject-nav-item:hover {
   min-width: 0;
 }
 
-.hero-copy > p {
+.hero-copy>p {
   max-width: 640px;
   margin: 0 0 32px;
   color: var(--muted);
@@ -531,7 +553,7 @@ body:not(.dark) .subject-nav-item:hover {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 28px;
-  background: 
+  background:
     radial-gradient(circle at 50% 50%, var(--accent-soft), transparent 60%),
     var(--surface);
   backdrop-filter: blur(10px);
@@ -540,13 +562,23 @@ body:not(.dark) .subject-nav-item:hover {
 }
 
 @keyframes spin {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to { transform: translate(-50%, -50%) rotate(360deg); }
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 @keyframes spinRev {
-  from { transform: translate(-50%, -50%) rotate(360deg); }
-  to { transform: translate(-50%, -50%) rotate(0deg); }
+  from {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
 }
 
 .orbit {
@@ -571,9 +603,17 @@ body:not(.dark) .subject-nav-item:hover {
 }
 
 @keyframes floatIcon {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .hero-stat {
@@ -794,7 +834,7 @@ body:not(.dark) .subject-nav-item:hover {
   line-height: 1.2;
 }
 
-.subject-card > p {
+.subject-card>p {
   min-height: 40px;
   margin: 0;
   color: var(--muted);
@@ -981,20 +1021,20 @@ body.dark .resource-drawer summary:hover {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.topic-list input:checked + .checkmark {
+.topic-list input:checked+.checkmark {
   border-color: var(--subject-accent);
   background: var(--subject-accent);
   box-shadow: 0 0 10px color-mix(in srgb, var(--subject-accent) 30%, transparent);
 }
 
-.topic-list input:checked + .checkmark::after {
+.topic-list input:checked+.checkmark::after {
   color: #fff;
   content: "✓";
   font-size: 11px;
   font-weight: 900;
 }
 
-.topic-list input:checked ~ span:last-child {
+.topic-list input:checked~span:last-child {
   color: var(--muted);
   text-decoration: line-through;
   text-decoration-color: var(--subject-accent);
@@ -1027,7 +1067,7 @@ body.dark .resource-drawer summary:hover {
   border: 1px solid var(--line);
   border-radius: 28px;
   position: relative;
-  background: 
+  background:
     radial-gradient(circle at 90% 0%, var(--accent-soft), transparent 45%),
     var(--surface);
   backdrop-filter: blur(12px);
@@ -1462,7 +1502,7 @@ body:not(.dark) .presentation {
   overflow-wrap: anywhere;
 }
 
-.slide-copy > p {
+.slide-copy>p {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.7;
@@ -1954,7 +1994,7 @@ body.presentation-open {
     padding-left: 18px;
   }
 
-  .hero-copy > p {
+  .hero-copy>p {
     font-size: 14px;
   }
 
@@ -2237,9 +2277,11 @@ body.presentation-open {
     grid-template-columns: 1fr;
     gap: 20px;
   }
+
   .welcome-container {
     padding: 30px 16px;
   }
+
   .portal-card {
     padding: 30px;
   }
