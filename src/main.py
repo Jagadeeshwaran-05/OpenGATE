@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 from src.database import DatabaseHelper
 from src.parser import get_curriculum_data_da, get_curriculum_data_cs, DSAI_GATE_DIR, CSE_GATE_DIR
-from src.agent.graph import tutor_agent
+from src.agent.graph import tutor_agent, AgentState
 
 # Initialize SQLite database schema
 DatabaseHelper.init_db()
@@ -127,7 +127,7 @@ async def save_notes(data: NoteSync):
 
 @app.post("/api/custom-nodes")
 async def save_custom_node(data: CustomNode):
-    DatabaseHelper.save_custom_node(data.id, data.parent, data.title, data.url)
+    DatabaseHelper.save_custom_node(data.id, data.parent, data.title, data.url or "")
     return {"status": "success"}
 
 
@@ -162,7 +162,7 @@ async def tutor_chat(data: TutorChatInput):
             })
             mlflow.log_param("question_preview", data.question[:200])
             
-            inputs = {
+            inputs: AgentState = {
                 "question": data.question,
                 "paper": data.paper,
                 "chat_history": data.chat_history,
