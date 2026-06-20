@@ -17,3 +17,8 @@ gate_study.db
 /cse-gate
 /dsai-gate
 /general-info
+
+# Environment variables & secrets
+.env
+*.env
+
