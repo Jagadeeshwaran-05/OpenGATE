@@ -2286,3 +2286,133 @@ body.presentation-open {
     padding: 30px;
   }
 }
+
+/* AI Tutor Chat Styling */
+.tutor-panel {
+  right: 0;
+  border-left: 1px solid var(--line);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Chat bubble structures */
+.tutor-message {
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 85%;
+  word-wrap: break-word;
+  animation: messageFadeIn 0.2s ease-out forwards;
+}
+
+.tutor-message.user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+}
+
+.tutor-message.assistant {
+  align-self: flex-start;
+  background: var(--surface-solid);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-bottom-left-radius: 4px;
+}
+
+/* Message text element styling */
+.tutor-message p {
+  margin: 0 0 10px 0;
+}
+.tutor-message p:last-child {
+  margin-bottom: 0;
+}
+
+.tutor-message code {
+  font-family: monospace;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tutor-message pre {
+  margin: 10px 0;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.tutor-message pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.tutor-message ul, .tutor-message ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.tutor-message li {
+  margin-bottom: 4px;
+}
+
+.tutor-message a {
+  color: var(--cyan);
+  text-decoration: underline;
+}
+
+/* Chat loading bubble */
+.tutor-message.loading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  background: var(--surface-soft);
+  border-color: var(--line);
+}
+
+.tutor-loader-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: dotPulse 1.2s infinite ease-in-out;
+}
+
+.tutor-loader-dot:nth-child(2) {
+  animation-delay: 0.2s;
+  background: var(--cyan);
+}
+
+.tutor-loader-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(0.6); opacity: 0.4; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+@keyframes messageFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar styles for chat history */
+.tutor-chat-history::-webkit-scrollbar {
+  width: 6px;
+}
+.tutor-chat-history::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tutor-chat-history::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
+.tutor-chat-history::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}

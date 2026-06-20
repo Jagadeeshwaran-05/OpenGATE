@@ -56,6 +56,21 @@ const notesInput = document.querySelector("#notes-input");
 const notesStatus = document.querySelector("#notes-status");
 const notesExportBtn = document.querySelector("#notes-export");
 
+// Tutor elements
+const slideTutorToggle = document.querySelector("#slide-tutor-toggle");
+const mainTutorToggle = document.querySelector("#main-tutor-toggle");
+const tutorPanel = document.querySelector("#tutor-panel");
+const tutorClose = document.querySelector("#tutor-close");
+const tutorTopicTitle = document.querySelector("#tutor-topic-title");
+const tutorChatHistory = document.querySelector("#tutor-chat-history");
+const tutorChatForm = document.querySelector("#tutor-chat-form");
+const tutorChatInput = document.querySelector("#tutor-chat-input");
+const tutorStatus = document.querySelector("#tutor-status");
+
+const tutorHistories = {};
+
+
+
 // Map elements
 const overallMapContainer = document.querySelector("#overall-map");
 const mapAddNodeBtn = document.querySelector("#map-add-node");
@@ -748,6 +763,12 @@ function renderSlide() {
   notesTitle.textContent = slide.topic;
   notesInput.value = notes[topicId] || "";
   notesStatus.textContent = "Saved locally & cloud";
+
+  // Refresh tutor heading and render chat
+  tutorTopicTitle.textContent = slide.topic;
+  if (!tutorPanel.hidden) {
+    renderTutorChat();
+  }
 }
 
 function nextSlide() {
@@ -984,7 +1005,201 @@ document.querySelector("#presentation-fullscreen").addEventListener("click", tog
 
 slideNotesToggle.addEventListener("click", () => {
   notesPanel.hidden = !notesPanel.hidden;
+  if (!notesPanel.hidden) {
+    tutorPanel.hidden = true;
+  }
 });
 notesClose.addEventListener("click", () => {
   notesPanel.hidden = true;
 });
+
+// Tutor panel toggling
+slideTutorToggle.addEventListener("click", () => {
+  tutorPanel.hidden = !tutorPanel.hidden;
+  if (!tutorPanel.hidden) {
+    notesPanel.hidden = true;
+    renderTutorChat();
+  }
+});
+
+mainTutorToggle.addEventListener("click", () => {
+  tutorPanel.hidden = !tutorPanel.hidden;
+  if (!tutorPanel.hidden) {
+    notesPanel.hidden = true;
+    renderTutorChat();
+  }
+});
+
+tutorClose.addEventListener("click", () => {
+  tutorPanel.hidden = true;
+});
+
+
+// Tutor Chat Rendering and Management
+function renderTutorChat() {
+  let topicId;
+  let topicTitleText;
+  
+  const isPresentationOpen = document.body.classList.contains("presentation-open");
+  if (isPresentationOpen) {
+    const slide = slides[currentSlide];
+    if (!slide) return;
+    topicId = slide.id;
+    topicTitleText = slide.topic;
+  } else {
+    topicId = `general:${paper}`;
+    topicTitleText = `GATE ${paper.toUpperCase()} Tutor`;
+  }
+  
+  tutorTopicTitle.textContent = topicTitleText;
+  
+  // Default welcome message
+  const defaultWelcome = {
+    role: "assistant",
+    content: isPresentationOpen 
+      ? `Hello! I am your AI Tutor. Ask me any conceptual questions, requests to solve math problems, or coding queries about the active topic (**${topicTitleText}**). I will retrieve context from the GATE syllabus guides and textbooks to help you!`
+      : `Hello! I am your AI Tutor for the **GATE ${paper.toUpperCase()}** syllabus explorer. Ask me any general questions about the syllabus, exam pattern, preparation timeline, cutoffs, or specific topics. I will query the databases and textbooks to help you!`
+  };
+  
+  if (!tutorHistories[topicId]) {
+    tutorHistories[topicId] = [defaultWelcome];
+  }
+  
+  tutorChatHistory.innerHTML = "";
+  
+  tutorHistories[topicId].forEach(msg => {
+    const bubble = document.createElement("div");
+    bubble.className = `tutor-message ${msg.role}`;
+    
+    if (msg.role === "user") {
+      bubble.textContent = msg.content;
+    } else {
+      // Parse markdown to HTML
+      if (window.marked && typeof marked.parse === "function") {
+        bubble.innerHTML = marked.parse(msg.content);
+      } else {
+        bubble.textContent = msg.content;
+      }
+    }
+    
+    tutorChatHistory.appendChild(bubble);
+  });
+  
+  // Render LaTeX math formulas
+  if (window.renderMathInElement) {
+    renderMathInElement(tutorChatHistory, {
+      delimiters: [
+        {left: "$$", right: "$$", display: true},
+        {left: "$", right: "$", display: false}
+      ],
+      throwOnError: false
+    });
+  }
+  
+  // Highlight code blocks
+  if (window.hljs) {
+    tutorChatHistory.querySelectorAll("pre code").forEach(block => {
+      hljs.highlightElement(block);
+    });
+  }
+  
+  // Scroll to bottom
+  tutorChatHistory.scrollTop = tutorChatHistory.scrollHeight;
+}
+
+// Chat submission handler
+tutorChatForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  
+  const isPresentationOpen = document.body.classList.contains("presentation-open");
+  let topicId;
+  let subjectId = null;
+  
+  if (isPresentationOpen) {
+    const slide = slides[currentSlide];
+    if (!slide) return;
+    topicId = slide.id;
+    subjectId = slide.subject.id;
+  } else {
+    topicId = `general:${paper}`;
+  }
+  
+  const questionText = tutorChatInput.value.trim();
+  if (!questionText) return;
+  
+  tutorChatInput.value = "";
+  
+  // Add user message to history
+  tutorHistories[topicId].push({
+    role: "user",
+    content: questionText
+  });
+  
+  renderTutorChat();
+  
+  // Set UI loading states
+  tutorStatus.textContent = "Generating...";
+  tutorChatInput.disabled = true;
+  document.querySelector("#tutor-send-btn").disabled = true;
+  
+  // Render loading bubble
+  const loaderBubble = document.createElement("div");
+  loaderBubble.className = "tutor-message assistant loading";
+  loaderBubble.innerHTML = `
+    <span class="tutor-loader-dot"></span>
+    <span class="tutor-loader-dot"></span>
+    <span class="tutor-loader-dot"></span>
+  `;
+  tutorChatHistory.appendChild(loaderBubble);
+  tutorChatHistory.scrollTop = tutorChatHistory.scrollHeight;
+  
+  try {
+    // Send history before the active user message
+    const historyToSend = tutorHistories[topicId].slice(0, -1);
+    
+    const res = await fetch("/api/tutor/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: questionText,
+        paper: paper,
+        subject_id: subjectId,
+        topic_id: topicId,
+        chat_history: historyToSend
+      })
+    });
+    
+    // Remove loader
+    loaderBubble.remove();
+    
+    if (res.ok) {
+      const data = await res.json();
+      tutorHistories[topicId].push({
+        role: "assistant",
+        content: data.response
+      });
+      tutorStatus.textContent = "Ready";
+    } else {
+      const errData = await res.json();
+      tutorHistories[topicId].push({
+        role: "assistant",
+        content: `Error: ${errData.detail || "Unable to retrieve response from AI Tutor."}`
+      });
+      tutorStatus.textContent = "Error";
+    }
+  } catch (err) {
+    loaderBubble.remove();
+    tutorHistories[topicId].push({
+      role: "assistant",
+      content: `Failed to connect to backend server: ${err.message}`
+    });
+    tutorStatus.textContent = "Failed";
+  } finally {
+    tutorChatInput.disabled = false;
+    document.querySelector("#tutor-send-btn").disabled = false;
+    renderTutorChat();
+    tutorChatInput.focus();
+  }
+});
+
+

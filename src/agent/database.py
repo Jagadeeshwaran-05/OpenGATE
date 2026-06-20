@@ -31,3 +31,25 @@ class VectorCache:
             n_results=limit
         )
         return results.get("documents", [[]])[0]
+
+    def search_notes_segmented(self, query: str, paper: str, limit: int = 4) -> list:
+        """Perform similarity search, isolating sources by paper ('cs' or 'da') and 'general'."""
+        query_embeddings = self.model.encode(query).tolist()
+        # Segment filter: source must be either the active paper or 'general'
+        where_filter = {"source": {"$in": [paper, "general"]}}
+        results = self.collection.query(
+            query_embeddings=[query_embeddings],
+            n_results=limit,
+            where=where_filter
+        )
+        documents = results.get("documents", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
+        
+        docs_with_meta = []
+        for doc, meta in zip(documents, metadatas):
+            docs_with_meta.append({
+                "content": doc,
+                "metadata": meta
+            })
+        return docs_with_meta
+

@@ -12,9 +12,18 @@
   <link rel="canonical" href="{{ pages_url }}">
   <title>{{ paper_title }}</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/styles.css?v=1.1.0">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Math and Markdown CDNs -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 </head>
+
 <body>
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
@@ -45,9 +54,13 @@
       <button class="button quiet" id="open-memory-map">
         Memory map <span aria-hidden="true">◎</span>
       </button>
+      <button class="button primary" id="main-tutor-toggle" style="background: linear-gradient(135deg, var(--accent), var(--cyan)); border: 0; color: white; font-weight: 600;">
+        Ask AI Tutor ✦
+      </button>
       <button class="button primary" id="present-all">
         Present <span aria-hidden="true">▶</span>
       </button>
+
       <a class="button primary" href="{{ repository_url }}" target="_blank" rel="noreferrer">
         GitHub <span aria-hidden="true">↗</span>
       </a>
@@ -212,10 +225,12 @@
         <button class="presentation-tab" id="overall-map-tab" role="tab" aria-selected="false" aria-controls="overall-map-panel">Overall map</button>
       </div>
       <div class="presentation-actions">
+        <button class="button primary" id="slide-tutor-toggle" style="background: linear-gradient(135deg, var(--accent), var(--cyan)); border: 0;">Ask AI Tutor ✦</button>
         <button class="button quiet" id="slide-notes-toggle">Notes</button>
         <button class="button quiet" id="presentation-fullscreen">Fullscreen</button>
         <button class="icon-button" id="presentation-close" aria-label="Close presentation">×</button>
       </div>
+
     </header>
 
     <div class="presentation-stage">
@@ -307,8 +322,32 @@
     </footer>
   </section>
 
+  <!-- Tutor Slide-out Panel -->
+  <aside class="notes-panel tutor-panel" id="tutor-panel" hidden style="grid-template-rows: auto minmax(0, 1fr) auto;">
+    <div class="notes-heading tutor-heading">
+      <div>
+        <span class="eyebrow" style="color: var(--accent); font-weight: 700;">GATE Study AI Tutor</span>
+        <h3 id="tutor-topic-title" style="margin: 4px 0;">Topic Tutor</h3>
+      </div>
+      <button class="icon-button" id="tutor-close" aria-label="Close tutor">×</button>
+    </div>
+    
+    <div class="tutor-chat-history" id="tutor-chat-history" style="overflow-y: auto; margin: 16px 0; padding: 4px; display: flex; flex-direction: column; gap: 16px;">
+      <!-- Chat bubbles loaded dynamically -->
+    </div>
+    
+    <form class="tutor-chat-input-area" id="tutor-chat-form" style="display: flex; flex-direction: column; gap: 10px;">
+      <textarea id="tutor-chat-input" placeholder="Ask a question about this topic..." required style="margin: 0; min-height: 80px;"></textarea>
+      <div class="notes-footer tutor-footer" style="display: flex; align-items: center; justify-content: space-between;">
+        <span id="tutor-status" style="font-size: 10px; color: var(--muted);">Ready</span>
+        <button class="button primary" type="submit" id="tutor-send-btn">Ask Tutor</button>
+      </div>
+    </form>
+  </aside>
+
+
   <!-- Syllabus Data for JavaScript to utilize -->
   <script id="syllabus-data" type="application/json">{{ subjects|tojson }}</script>
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=1.1.0"></script>
 </body>
 </html>
