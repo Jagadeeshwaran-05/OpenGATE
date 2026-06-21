@@ -61,6 +61,7 @@ const slideTutorToggle = document.querySelector("#slide-tutor-toggle");
 const mainTutorToggle = document.querySelector("#main-tutor-toggle");
 const tutorPanel = document.querySelector("#tutor-panel");
 const tutorClose = document.querySelector("#tutor-close");
+const tutorFullscreen = document.querySelector("#tutor-fullscreen");
 const tutorTopicTitle = document.querySelector("#tutor-topic-title");
 const tutorChatHistory = document.querySelector("#tutor-chat-history");
 const tutorChatForm = document.querySelector("#tutor-chat-form");
@@ -1030,9 +1031,29 @@ mainTutorToggle.addEventListener("click", () => {
   }
 });
 
+// --- SVG Icon Constants for Fullscreen Toggle ---
+// Lucide-style SVG representing expand corners (for entering fullscreen mode)
+const tutorFullscreenSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>`;
+// Lucide-style SVG representing shrink/minimize corners (for exiting fullscreen mode)
+const tutorMinimizeSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"></path></svg>`;
+
 tutorClose.addEventListener("click", () => {
   tutorPanel.hidden = true;
+  tutorPanel.classList.remove("fullscreen");
+  if (tutorFullscreen) {
+    tutorFullscreen.innerHTML = tutorFullscreenSVG;
+    tutorFullscreen.title = "Toggle Fullscreen";
+  }
 });
+
+if (tutorFullscreen) {
+  tutorFullscreen.addEventListener("click", () => {
+    tutorPanel.classList.toggle("fullscreen");
+    const isFullscreen = tutorPanel.classList.contains("fullscreen");
+    tutorFullscreen.innerHTML = isFullscreen ? tutorMinimizeSVG : tutorFullscreenSVG;
+    tutorFullscreen.title = isFullscreen ? "Exit Fullscreen" : "Toggle Fullscreen";
+  });
+}
 
 
 // Tutor Chat Rendering and Management
@@ -1201,5 +1222,17 @@ tutorChatForm.addEventListener("submit", async (e) => {
     tutorChatInput.focus();
   }
 });
+
+// Intercept keyboard events in the chat input area:
+// - Enter (without Shift): Prevents default newline insertion and submits the prompt immediately.
+// - Shift + Enter: Allows standard multiline newline entry.
+if (tutorChatInput) {
+  tutorChatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault(); // Stop a physical newline from being typed
+      tutorChatForm.requestSubmit(); // Trigger standard form validation and submit event
+    }
+  });
+}
 
 

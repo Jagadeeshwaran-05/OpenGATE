@@ -1,3 +1,10 @@
+"""
+Agent Graph Module
+==================
+Defines the LangGraph StateGraph state schema, node functions, routing conditional
+logic, and compiles the final RAG-based AI Tutor agent.
+"""
+
 import os
 import re
 from typing import Dict, TypedDict, List, Optional
@@ -10,18 +17,31 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from src.agent.database import VectorCache
 from src.agent.tools import solve_equation, web_search_tool
 
-# Define Agent state schema
-class AgentState(TypedDict):
-    question: str
-    paper: str               # 'cs' or 'da'
-    chat_history: List[Dict[str, str]]  # [{'role': 'user', 'content': '...'}, {'role': 'assistant', 'content': '...'}]
-    retrieved_docs: List[Dict]
-    math_solution: Optional[str]
-    response: str
-    steps: List[str]
+# === AGENT STATE DEFINITION ===
 
-# Initialize LLM dynamically from environment variables
+class AgentState(TypedDict):
+    """
+    Schema for the state variables passed between nodes in the LangGraph workflow.
+    """
+    question: str                       # Active user query
+    paper: str                          # Active paper stream ('cs' or 'da')
+    chat_history: List[Dict[str, str]]  # Accumulated chat conversation history
+    retrieved_docs: List[Dict]          # Retreived database documents/snippets
+    math_solution: Optional[str]        # Result from symbolic math solver if executed
+    response: str                       # Final generated response/explanation text
+    steps: List[str]                    # Audit log of nodes executed in this run
+
+
+# === LLM PROVIDER DISPATCHER ===
+
 def get_llm():
+    """
+    Instantiates the appropriate LangChain Chat LLM provider based on environment keys.
+    Prioritizes OpenRouter/Gemini-2.5, falling back to Google Generative AI/Gemini-1.5.
+    
+    Returns:
+        A BaseChatModel instance configured for conversation generation.
+    """
     gemini_key = os.getenv("GEMINI_API_KEY")
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
     
@@ -44,8 +64,13 @@ def get_llm():
         raise ValueError("Neither GEMINI_API_KEY nor OPENROUTER_API_KEY was found in the environment.")
 
 
-# Node: Retrieve notes from ChromaDB
+# === GRAPH NODE DEFINITIONS ===
+
 def retrieve_notes(state: AgentState) -> Dict:
+    """
+    Node: Queries the ChromaDB vector database for context.
+    Matches queries against the active subject/paper scope or 'general' documents.
+    """
     db = VectorCache()
     # Search segmented by active paper and general info
     docs = db.search_notes_segmented(state["question"], state["paper"], limit=4)
@@ -54,22 +79,57 @@ def retrieve_notes(state: AgentState) -> Dict:
         "steps": state.get("steps", []) + ["retrieve_notes"]
     }
 
-# Node: Check relevance and route
+
 def check_relevance(state: AgentState) -> str:
+    """
+    Conditional Routing Node: Evaluates relevance/sufficiency of retrieved context.
+    Uses the LLM to classify if the context is sufficient to answer the user query.
+    If context is insufficient or requires web search (realtime dates/external specs),
+    routes to 'search'. Otherwise, routes to 'solve_math'.
+    """
     # If no notes retrieved, fall back to web search
     if not state["retrieved_docs"]:
         return "search"
         
-    # Standard heuristic check: if we have notes, go to math solving or generation
-    # For a high-fidelity agent, we can also check if the query is a greeting or general
+    try:
+        llm = get_llm()
+        question = state["question"]
+        contexts = []
+        for doc in state["retrieved_docs"]:
+            contexts.append(doc.get("content", ""))
+        context_str = "\n\n".join(contexts)
+        
+        system_prompt = (
+            "You are a routing agent. Determine if the retrieved context contains the information "
+            "necessary to answer the user's question, or if it is unrelated/insufficient and requires a web search.\n"
+            "Reply with ONLY 'search' if a web search is needed (e.g. the query is about real-time/future info not in the context, "
+            "or the context doesn't contain the answer).\n"
+            "Reply with ONLY 'solve_math' if the context is relevant or sufficient to answer, or if the question is a standard academic concept that does not require real-time web info.\n"
+            "Do not write anything else besides 'search' or 'solve_math'."
+        )
+        
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=f"Context:\n{context_str}\n\nQuestion: {question}")
+        ]
+        
+        res = llm.invoke(messages)
+        decision = res.content.strip().lower()
+        if "search" in decision:
+            print(f"Relevance check routed to 'search' because context is irrelevant/insufficient for: '{question}'")
+            return "search"
+    except Exception as e:
+        print(f"Relevance routing check failed, defaulting to 'solve_math': {e}")
+        
     return "solve_math"
 
-# Node: Solve Math problems using SymPy
+
 def solve_math(state: AgentState) -> Dict:
+    """
+    Node: Detects symbolic math content and solves it with SymPy.
+    Uses an LLM parser to extract a SymPy-executable string, then evaluates it safely.
+    """
     question = state["question"]
-    
-    # We ask the LLM to inspect if there is a symbolic math equation to solve.
-    # If so, the LLM outputs ONLY a valid SymPy expression. Otherwise, it outputs "NONE".
     llm = get_llm()
     system_prompt = (
         "You are a mathematical parser for SymPy. Analyze the user's question and history.\n"
@@ -83,9 +143,9 @@ def solve_math(state: AgentState) -> Dict:
         "If no symbolic computation is needed, reply with 'NONE'. Do not include markdown tags, quotes, or formatting."
     )
     
-    # Construct history messages
+    # Construct history messages (context window of last 3 messages)
     messages = [SystemMessage(content=system_prompt)]
-    for msg in state["chat_history"][-3:]: # context window of last 3 messages
+    for msg in state["chat_history"][-3:]:
         if msg["role"] == "user":
             messages.append(HumanMessage(content=msg["content"]))
         else:
@@ -110,8 +170,12 @@ def solve_math(state: AgentState) -> Dict:
         print(f"Math solver node encountered error: {e}")
         return {"math_solution": None, "steps": state.get("steps", []) + ["math_solver_failed"]}
 
-# Node: Fallback web search
+
 def web_search(state: AgentState) -> Dict:
+    """
+    Node: Fallback Web Search.
+    Queries DuckDuckGo and appends the search snippet context to state['retrieved_docs'].
+    """
     try:
         query = state["question"]
         print(f"Local database did not yield enough context. Running DuckDuckGo search: {query}")
@@ -128,8 +192,12 @@ def web_search(state: AgentState) -> Dict:
         print(f"Web search failed: {e}")
         return {"steps": state.get("steps", []) + ["web_search_failed"]}
 
-# Node: Generate explanation
+
 def generate_explanation(state: AgentState) -> Dict:
+    """
+    Node: Generates the final tutor output.
+    Aggregates document contexts, symbolic math outputs, and formats them in LaTeX-compliant Markdown.
+    """
     llm = get_llm()
     
     # Gather retrieved documents
@@ -159,14 +227,14 @@ def generate_explanation(state: AgentState) -> Dict:
     
     messages = [SystemMessage(content=system_prompt)]
     
-    # Add chat history
+    # Add conversation chat history
     for msg in state["chat_history"]:
         if msg["role"] == "user":
             messages.append(HumanMessage(content=msg["content"]))
         else:
             messages.append(AIMessage(content=msg["content"]))
             
-    # Add active question
+    # Add active query
     messages.append(HumanMessage(content=state["question"]))
     
     try:
@@ -182,10 +250,13 @@ def generate_explanation(state: AgentState) -> Dict:
             "steps": state.get("steps", []) + ["generate_explanation_failed"]
         }
 
-# Build LangGraph StateGraph
+
+# === STATEGRAPH COMPILATION ===
+
+# Initialize StateGraph builder
 builder = StateGraph(AgentState)
 
-# Add Nodes
+# Register Nodes
 builder.add_node("retrieve_notes", retrieve_notes)
 builder.add_node("solve_math", solve_math)
 builder.add_node("web_search", web_search)
@@ -194,7 +265,7 @@ builder.add_node("generate_explanation", generate_explanation)
 # Set Entry Point
 builder.set_entry_point("retrieve_notes")
 
-# Add Conditional Edges
+# Register Conditional Routing Edges
 builder.add_conditional_edges(
     "retrieve_notes",
     check_relevance,
@@ -204,10 +275,10 @@ builder.add_conditional_edges(
     }
 )
 
-# Connect intermediate nodes
+# Connect linear edges
 builder.add_edge("web_search", "solve_math")
 builder.add_edge("solve_math", "generate_explanation")
 builder.add_edge("generate_explanation", END)
 
-# Compile Graph
+# Compile Graph into Agent
 tutor_agent = builder.compile()

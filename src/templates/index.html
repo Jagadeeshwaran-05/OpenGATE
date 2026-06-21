@@ -12,7 +12,7 @@
   <link rel="canonical" href="{{ pages_url }}">
   <title>{{ paper_title }}</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/styles.css?v=1.1.0">
+  <link rel="stylesheet" href="/static/styles.css?v=1.1.2">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Math and Markdown CDNs -->
@@ -329,7 +329,12 @@
         <span class="eyebrow" style="color: var(--accent); font-weight: 700;">GATE Study AI Tutor</span>
         <h3 id="tutor-topic-title" style="margin: 4px 0;">Topic Tutor</h3>
       </div>
-      <button class="icon-button" id="tutor-close" aria-label="Close tutor">×</button>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="icon-button" id="tutor-fullscreen" aria-label="Toggle tutor fullscreen" style="opacity: 0.75;" title="Toggle Fullscreen">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+        </button>
+        <button class="icon-button" id="tutor-close" aria-label="Close tutor">×</button>
+      </div>
     </div>
     
     <div class="tutor-chat-history" id="tutor-chat-history" style="overflow-y: auto; margin: 16px 0; padding: 4px; display: flex; flex-direction: column; gap: 16px;">
@@ -348,6 +353,6 @@
 
   <!-- Syllabus Data for JavaScript to utilize -->
   <script id="syllabus-data" type="application/json">{{ subjects|tojson }}</script>
-  <script src="/static/app.js?v=1.1.0"></script>
+  <script src="/static/app.js?v=1.1.2"></script>
 </body>
 </html>
