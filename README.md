@@ -11,7 +11,8 @@ OpenGATE is an interactive study portal and intelligent learning assistant desig
   - **Segmented Search**: Restricts retrieved vector contexts to the selected track (`cse-gate` or `dsai-gate`) plus common background info (`general-info`).
   - **Symbolic Math Solver**: Uses SymPy to parse mathematical equations, derivatives, and integrals to calculate exact solutions.
   - **Conversational Memory**: Retains the last 10 turns of dialogue context.
-  - **Fallback Search**: Automates DuckDuckGo web searches when local context does not yield relevant materials.
+  - **Dynamic Fallback Search**: Uses an LLM classifier to determine if local vector database context is relevant/sufficient, falling back to a DuckDuckGo web search for real-time, missing, or future queries.
+  - **Fullscreen & Keyboard Optimizations**: Features a fullscreen SVG toggle button to expand the chat panel to 100% viewport width, and binds query submission to the Enter key (Shift+Enter for standard newlines).
 - **Experiment Tracking**: Full logging of query params, conversation histories, retrieved document excerpts, execution steps, and responses to DagsHub via MLflow.
 
 ## Tech Stack
