@@ -616,6 +616,20 @@ body:not(.dark) .subject-nav-item:hover {
   }
 }
 
+@keyframes floatMainIcon {
+  0% {
+    transform: translate(-50%, -50%) translateY(0px);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translateY(-8px);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) translateY(0px);
+  }
+}
+
 .hero-stat {
   position: absolute;
   display: grid;
@@ -656,7 +670,7 @@ body:not(.dark) .subject-nav-item:hover {
   border-color: var(--accent);
   box-shadow: 0 15px 35px color-mix(in srgb, var(--accent) 15%, transparent);
   transform: translate(-50%, -50%);
-  animation: floatIcon 8s ease-in-out infinite alternate;
+  animation: floatMainIcon 8s ease-in-out infinite alternate;
 }
 
 .main-stat span {
