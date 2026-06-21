@@ -17,6 +17,58 @@ from src.agent.graph import tutor_agent, AgentState
 # Initialize SQLite database schema
 DatabaseHelper.init_db()
 
+def generate_pipeline_mermaid(steps: List[str]) -> str:
+    """Generate a Mermaid flowchart markdown string representing the active execution path in the RAG agent."""
+    active_color = "#3b82f6"       # Bright blue highlight
+    inactive_color = "#1e293b"     # Dark slate inactive
+    highlight_stroke = "#60a5fa"   # Light blue border
+    standard_stroke = "#334155"    # Dark grey border
+    
+    retrieve_active = "retrieve_notes" in steps
+    search_active = "web_search" in steps
+    math_active = "solve_math" in steps
+    gen_active = "generate_explanation" in steps or "generate_explanation_failed" in steps
+
+    style_retrieve = f"fill:{active_color},stroke:{highlight_stroke},stroke-width:2px,color:#fff" if retrieve_active else f"fill:{inactive_color},stroke:{standard_stroke},color:#94a3b8"
+    style_search = f"fill:{active_color},stroke:{highlight_stroke},stroke-width:2px,color:#fff" if search_active else f"fill:{inactive_color},stroke:{standard_stroke},color:#94a3b8"
+    style_math = f"fill:{active_color},stroke:{highlight_stroke},stroke-width:2px,color:#fff" if math_active else f"fill:{inactive_color},stroke:{standard_stroke},color:#94a3b8"
+    style_gen = f"fill:{active_color},stroke:{highlight_stroke},stroke-width:2px,color:#fff" if gen_active else f"fill:{inactive_color},stroke:{standard_stroke},color:#94a3b8"
+
+    link_retrieve_search = "==>|No Context|" if (retrieve_active and search_active) else "-->|No Context|"
+    link_retrieve_math = "==>|Context Found|" if (retrieve_active and not search_active) else "-->|Context Found|"
+    link_search_math = "==>" if search_active else "-->"
+    link_math_gen = "==>" if (math_active or search_active) else "-->"
+
+    steps_list = "\n".join([f"- {s}" for s in steps])
+
+    mermaid_str = f"""# Run Pipeline Execution Trace
+
+Below is the visual pipeline graph showing the execution flow for this run. Nodes highlighted in blue were executed.
+
+```mermaid
+graph TD
+  startNode([Start]) ==> retrieve_notes
+  
+  retrieve_notes[1. Retrieve Notes] {link_retrieve_search} web_search
+  retrieve_notes {link_retrieve_math} solve_math
+  
+  web_search[2. Web Search Fallback] {link_search_math} solve_math
+  
+  solve_math[3. SymPy Math Solver] {link_math_gen} generate_explanation[4. Generate Explanation]
+  
+  generate_explanation ==> endNode([End])
+
+  style retrieve_notes {style_retrieve}
+  style web_search {style_search}
+  style solve_math {style_math}
+  style generate_explanation {style_gen}
+```
+
+### Steps Executed
+{steps_list}
+"""
+    return mermaid_str
+
 app = FastAPI(title="OpenGATE Syllabus Explorer Backend")
 
 # Mount static files (resolved relative to src/ directory)
@@ -172,10 +224,18 @@ async def tutor_chat(data: TutorChatInput):
                 "steps": []
             }
             
+            import time
+            start_time = time.time()
+            
             # Execute LangGraph RAG Agent
             result = tutor_agent.invoke(inputs)
             
+            latency = time.time() - start_time
+            mlflow.log_metric("latency_seconds", latency)
+            
             # Log artifacts & trace details
+            mermaid_trace = generate_pipeline_mermaid(result.get("steps", []))
+            mlflow.log_text(mermaid_trace, "run_pipeline.md")
             mlflow.log_text(data.question, "user_question.txt")
             mlflow.log_text(result["response"], "tutor_response.txt")
             mlflow.log_param("agent_steps", ",".join(result.get("steps", [])))
