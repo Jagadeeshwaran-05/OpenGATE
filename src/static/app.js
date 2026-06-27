@@ -67,6 +67,12 @@ const tutorChatHistory = document.querySelector("#tutor-chat-history");
 const tutorChatForm = document.querySelector("#tutor-chat-form");
 const tutorChatInput = document.querySelector("#tutor-chat-input");
 const tutorStatus = document.querySelector("#tutor-status");
+const tutorModeToggle = document.querySelector("#tutor-mode-toggle");
+const tutorChatContainer = document.querySelector("#tutor-chat-container");
+const tutorTestContainer = document.querySelector("#tutor-test-container");
+
+let testModeActive = false;
+let activeTest = null; 
 
 const tutorHistories = {};
 
@@ -1044,6 +1050,17 @@ tutorClose.addEventListener("click", () => {
     tutorFullscreen.innerHTML = tutorFullscreenSVG;
     tutorFullscreen.title = "Toggle Fullscreen";
   }
+  // Reset test mode
+  testModeActive = false;
+  activeTest = null;
+  if (tutorModeToggle) {
+    tutorModeToggle.style.display = "none";
+    tutorModeToggle.classList.remove("active");
+    tutorModeToggle.style.background = "";
+    tutorModeToggle.style.color = "";
+  }
+  if (tutorChatContainer) tutorChatContainer.hidden = false;
+  if (tutorTestContainer) tutorTestContainer.hidden = true;
 });
 
 if (tutorFullscreen) {
@@ -1052,6 +1069,41 @@ if (tutorFullscreen) {
     const isFullscreen = tutorPanel.classList.contains("fullscreen");
     tutorFullscreen.innerHTML = isFullscreen ? tutorMinimizeSVG : tutorFullscreenSVG;
     tutorFullscreen.title = isFullscreen ? "Exit Fullscreen" : "Toggle Fullscreen";
+    
+    // Toggle the Mock Test Mode button display based on fullscreen status
+    if (tutorModeToggle) {
+      tutorModeToggle.style.display = isFullscreen ? "inline-flex" : "none";
+      if (!isFullscreen && testModeActive) {
+        // Automatically switch back to chat mode when leaving fullscreen
+        testModeActive = false;
+        activeTest = null;
+        if (tutorChatContainer) tutorChatContainer.hidden = false;
+        if (tutorTestContainer) tutorTestContainer.hidden = true;
+        tutorModeToggle.classList.remove("active");
+        tutorModeToggle.style.background = "";
+        tutorModeToggle.style.color = "";
+      }
+    }
+  });
+}
+
+if (tutorModeToggle) {
+  tutorModeToggle.addEventListener("click", () => {
+    testModeActive = !testModeActive;
+    if (testModeActive) {
+      tutorModeToggle.classList.add("active");
+      tutorModeToggle.style.background = "var(--accent)";
+      tutorModeToggle.style.color = "#ffffff";
+      if (tutorChatContainer) tutorChatContainer.hidden = true;
+      if (tutorTestContainer) tutorTestContainer.hidden = false;
+      renderTestArea();
+    } else {
+      tutorModeToggle.classList.remove("active");
+      tutorModeToggle.style.background = "";
+      tutorModeToggle.style.color = "";
+      if (tutorChatContainer) tutorChatContainer.hidden = false;
+      if (tutorTestContainer) tutorTestContainer.hidden = true;
+    }
   });
 }
 
@@ -1232,6 +1284,466 @@ if (tutorChatInput) {
       e.preventDefault(); // Stop a physical newline from being typed
       tutorChatForm.requestSubmit(); // Trigger standard form validation and submit event
     }
+  });
+}
+
+
+// ====================================================
+// MOCK TEST RUNNER & RENDERERS
+// ====================================================
+
+function renderTestArea() {
+  if (!tutorTestContainer) return;
+  
+  if (!activeTest) {
+    // Render Setup screen
+    renderTestSetup();
+  } else if (activeTest.scoreReport) {
+    // Render Results/Scorecard screen
+    renderTestScorecard();
+  } else {
+    // Render active question screen
+    renderActiveQuestion();
+  }
+}
+
+function renderTestSetup() {
+  // Generate subject list checkboxes if any subjects are loaded
+  const subjectListHtml = subjects.map(sub => {
+    // Format name cleanly from ID
+    const title = sub.id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return `
+      <label class="tutor-test-checkbox-label" id="lbl-sub-${sub.id}">
+        <input type="checkbox" name="test-subject-cb" value="${sub.id}">
+        <span>${sub.short}</span>
+      </label>
+    `;
+  }).join('');
+
+  tutorTestContainer.innerHTML = `
+    <div style="max-width: 650px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px; padding: 20px;">
+      <div style="text-align: center;">
+        <h2 style="margin: 0 0 10px 0; color: var(--accent);">GATE AI Mock Test Simulator</h2>
+        <p style="font-size: 13px; opacity: 0.8; line-height: 1.6;">
+          Test your preparation with a structured 20-question mock test. 
+          10 questions are extracted from previous year question papers or study material via RAG, 
+          and 10 questions are formulated dynamically by the AI to match the GATE exam syllabus.
+        </p>
+      </div>
+
+      <div class="tutor-test-card" style="margin: 0;">
+        <h4 style="margin: 0 0 12px 0;">Configure Test Scope</h4>
+        
+        <div style="display: flex; gap: 20px; margin-bottom: 16px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="radio" name="test-scope-radio" value="general" checked>
+            <span>General (Mix of all subjects)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="radio" name="test-scope-radio" value="subject">
+            <span>Subject-Specific</span>
+          </label>
+        </div>
+
+        <div id="test-subject-selection-container" style="display: none; border-top: 1px solid var(--line); padding-top: 16px;">
+          <h5 style="margin: 0 0 8px 0; opacity: 0.9;">Select Subjects:</h5>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px;">
+            ${subjectListHtml}
+          </div>
+        </div>
+      </div>
+
+      <button class="button primary" id="start-test-btn" style="min-height: 44px; font-weight: 700; width: 100%; font-size: 14px;">
+        Start Mock Test
+      </button>
+    </div>
+  `;
+
+  // Bind change/checked behaviors
+  const radios = tutorTestContainer.querySelectorAll('input[name="test-scope-radio"]');
+  const subjectContainer = tutorTestContainer.querySelector('#test-subject-selection-container');
+  radios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      subjectContainer.style.display = e.target.value === 'subject' ? 'block' : 'none';
+    });
+  });
+
+  const checkboxes = tutorTestContainer.querySelectorAll('input[name="test-subject-cb"]');
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const label = tutorTestContainer.querySelector(`#lbl-sub-${e.target.value}`);
+      if (label) {
+        if (e.target.checked) label.classList.add('checked');
+        else label.classList.remove('checked');
+      }
+    });
+  });
+
+  // Bind start action
+  tutorTestContainer.querySelector('#start-test-btn').addEventListener('click', async () => {
+    const activeScope = tutorTestContainer.querySelector('input[name="test-scope-radio"]:checked').value;
+    let selectedSubjects = [];
+    
+    if (activeScope === 'subject') {
+      const checkedBoxes = tutorTestContainer.querySelectorAll('input[name="test-subject-cb"]:checked');
+      checkedBoxes.forEach(box => selectedSubjects.push(box.value));
+      if (selectedSubjects.length === 0) {
+        alert('Please select at least one subject for subject-specific test mode.');
+        return;
+      }
+    }
+
+    // Show dynamic loading state
+    tutorTestContainer.innerHTML = `
+      <div style="text-align: center; margin: auto; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; max-width: 500px;">
+        <div class="tutor-test-spinner"></div>
+        <h3 style="margin: 0; color: var(--accent);">Compiling Your Mock Test...</h3>
+        <p style="font-size: 13px; opacity: 0.8; line-height: 1.6; margin: 0;">
+          Querying ChromaDB vector database for 10 relevant previous year questions (PYQs) and formulating 10 specialized syllabus topics with the AI. This process usually takes 10-15 seconds. Please do not close the panel.
+        </p>
+      </div>
+    `;
+
+    try {
+      const response = await fetch('/api/tutor/test/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paper: paper,
+          test_type: activeScope,
+          subjects: selectedSubjects
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Server returned an error generating test');
+      }
+
+      const result = await response.json();
+      
+      activeTest = {
+        questions: result.questions,
+        answers: {},
+        currentIndex: 0,
+        scoreReport: null
+      };
+
+      renderActiveQuestion();
+    } catch (err) {
+      tutorTestContainer.innerHTML = `
+        <div style="text-align: center; margin: auto; padding: 40px; max-width: 450px; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+          <div style="font-size: 40px; color: #ef4444;">⚠️</div>
+          <h3 style="margin: 0;">Generation Failed</h3>
+          <p style="font-size: 13px; opacity: 0.8; line-height: 1.5; margin: 0;">
+            There was a connection or server error while setting up your mock test. Let's try again.
+          </p>
+          <button class="button primary" id="retry-setup-btn" style="min-height: 40px; padding: 0 20px;">Retry</button>
+        </div>
+      `;
+      const retryBtn = tutorTestContainer.querySelector('#retry-setup-btn');
+      if (retryBtn) retryBtn.addEventListener('click', renderTestSetup);
+    }
+  });
+}
+
+function renderActiveQuestion() {
+  if (!activeTest || !activeTest.questions || activeTest.questions.length === 0) return;
+
+  const currentQ = activeTest.questions[activeTest.currentIndex];
+  const progressPercent = (activeTest.currentIndex / activeTest.questions.length) * 100;
+  const currentAnswer = activeTest.answers[currentQ.id] || "";
+  
+  // Format clean subject label
+  const subjectLabel = currentQ.subject_id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+  let answerInputHtml = "";
+
+  if (currentQ.options && currentQ.options.length > 0) {
+    // MCQ options
+    const letters = ["A", "B", "C", "D"];
+    answerInputHtml = `
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+        ${currentQ.options.map((opt, idx) => {
+          const letter = letters[idx];
+          const isSelected = currentAnswer === letter;
+          return `
+            <div class="tutor-test-option ${isSelected ? 'selected' : ''}" data-letter="${letter}">
+              <input type="radio" name="q-option" value="${letter}" ${isSelected ? 'checked' : ''} style="pointer-events: none;">
+              <div>
+                <strong style="color: var(--accent); margin-right: 4px;">${letter}.</strong>
+                <span>${opt}</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  } else {
+    // NAT input
+    answerInputHtml = `
+      <div style="margin-top: 15px;">
+        <label style="display: block; font-weight: bold; margin-bottom: 8px; font-size: 13px;">Enter Numerical Answer:</label>
+        <input type="text" id="nat-answer-input" placeholder="e.g. 5.14 or 24" value="${currentAnswer}" style="width: 100%; max-width: 320px; padding: 12px; font-size: 15px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-soft); color: var(--text);">
+        <p style="font-size: 11px; opacity: 0.6; margin: 8px 0 0 0;">Please write exact decimal/integer values without units.</p>
+      </div>
+    `;
+  }
+
+  tutorTestContainer.innerHTML = `
+    <div style="max-width: 650px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 16px; padding: 20px;">
+      <!-- Progress and metadata header -->
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; margin-bottom: 6px;">
+          <span>Question ${activeTest.currentIndex + 1} of ${activeTest.questions.length}</span>
+          <span style="opacity: 0.7;">Progress: ${Math.round(progressPercent)}%</span>
+        </div>
+        <div class="progress-bar-container" style="background: var(--line); height: 6px; border-radius: 3px; overflow: hidden;">
+          <div class="progress-bar-fill" style="background: var(--accent); height: 100%; width: ${progressPercent}%; transition: width 0.2s ease;"></div>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="tutor-test-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 8px;">
+          <span class="tutor-test-badge ${currentQ.source_type}">${currentQ.source_type === 'pyq' ? 'PYQ / Study Material' : 'AI Generated'}</span>
+          <span style="font-size: 11px; opacity: 0.7; font-weight: 600;">Subject: ${subjectLabel}</span>
+        </div>
+        
+        <div style="font-size: 15px; line-height: 1.6; font-weight: 500; white-space: pre-line;">
+          ${currentQ.question_text}
+        </div>
+
+        ${answerInputHtml}
+      </div>
+
+      <!-- Controls footer -->
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 10px;">
+        <button class="button quiet" id="prev-q-btn" ${activeTest.currentIndex === 0 ? 'disabled' : ''} style="min-height: 40px; padding: 0 20px;">
+          Previous
+        </button>
+        
+        <button class="button primary" id="next-q-btn" style="min-height: 40px; padding: 0 24px;">
+          ${activeTest.currentIndex === activeTest.questions.length - 1 ? 'Submit Test' : 'Next Question'}
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Bind option clicks
+  const optionDivs = tutorTestContainer.querySelectorAll('.tutor-test-option');
+  optionDivs.forEach(div => {
+    div.addEventListener('click', () => {
+      optionDivs.forEach(d => d.classList.remove('selected'));
+      div.classList.add('selected');
+      const radio = div.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      
+      const answerVal = div.getAttribute('data-letter');
+      activeTest.answers[currentQ.id] = answerVal;
+    });
+  });
+
+  // Bind NAT text changes
+  const natInput = tutorTestContainer.querySelector('#nat-answer-input');
+  if (natInput) {
+    natInput.addEventListener('input', (e) => {
+      activeTest.answers[currentQ.id] = e.target.value;
+    });
+  }
+
+  // Bind button events
+  tutorTestContainer.querySelector('#prev-q-btn').addEventListener('click', () => {
+    if (activeTest.currentIndex > 0) {
+      activeTest.currentIndex--;
+      renderActiveQuestion();
+    }
+  });
+
+  tutorTestContainer.querySelector('#next-q-btn').addEventListener('click', () => {
+    if (activeTest.currentIndex < activeTest.questions.length - 1) {
+      activeTest.currentIndex++;
+      renderActiveQuestion();
+    } else {
+      // Last question - Submit entire test!
+      submitMockTestAnswers();
+    }
+  });
+}
+
+async function submitMockTestAnswers() {
+  if (!activeTest) return;
+
+  // Confirm before submitting
+  const answeredCount = Object.keys(activeTest.answers).filter(k => activeTest.answers[k].trim() !== "").length;
+  const unansweredCount = activeTest.questions.length - answeredCount;
+  
+  if (unansweredCount > 0) {
+    const confirmSubmit = confirm(`You have ${unansweredCount} unanswered questions. Are you sure you want to submit the test?`);
+    if (!confirmSubmit) return;
+  }
+
+  // Show evaluating/grading view
+  tutorTestContainer.innerHTML = `
+    <div style="text-align: center; margin: auto; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; max-width: 500px;">
+      <div class="tutor-test-spinner"></div>
+      <h3 style="margin: 0; color: var(--accent);">Evaluating Your Test...</h3>
+      <p style="font-size: 13px; opacity: 0.8; line-height: 1.6; margin: 0;">
+        Grading your Multiple Choice (MCQ) and Numerical (NAT) responses against correct standards using the AI Tutor. This takes a few seconds.
+      </p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('/api/tutor/test/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        questions: activeTest.questions,
+        answers: activeTest.answers
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Evaluation request failed');
+    }
+
+    const report = await response.json();
+    activeTest.scoreReport = report;
+    
+    renderTestScorecard();
+  } catch (err) {
+    tutorTestContainer.innerHTML = `
+      <div style="text-align: center; margin: auto; padding: 40px; max-width: 450px; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+        <div style="font-size: 40px; color: #ef4444;">⚠️</div>
+        <h3 style="margin: 0;">Evaluation Error</h3>
+        <p style="font-size: 13px; opacity: 0.8; line-height: 1.5; margin: 0;">
+          An error occurred while grading your test submission. Let's try resubmitting.
+        </p>
+        <button class="button primary" id="retry-submit-btn" style="min-height: 40px; padding: 0 20px;">Resubmit Answers</button>
+      </div>
+    `;
+    const retryBtn = tutorTestContainer.querySelector('#retry-submit-btn');
+    if (retryBtn) retryBtn.addEventListener('click', submitMockTestAnswers);
+  }
+}
+
+function renderTestScorecard() {
+  if (!activeTest || !activeTest.scoreReport) return;
+
+  const score = activeTest.scoreReport.score;
+  const percentage = Math.round((score / activeTest.questions.length) * 100);
+  
+  // Grade message
+  let feedbackMessage = "";
+  if (percentage >= 85) feedbackMessage = "Excellent performance! You demonstrate an outstanding grasp of the GATE concepts.";
+  else if (percentage >= 65) feedbackMessage = "Good attempt! You have a solid foundation, with room for minor revision.";
+  else if (percentage >= 40) feedbackMessage = "Passable score. You should spend extra time studying resources for topics marked incorrect.";
+  else feedbackMessage = "Requires focus. Use the syllabus mindmap to guide revision on these core topics.";
+
+  // Build list of reviewed questions
+  const evaluationsMap = {};
+  activeTest.scoreReport.evaluations.forEach(ev => {
+    evaluationsMap[ev.id] = ev;
+  });
+
+  const questionReviewsHtml = activeTest.questions.map((q, idx) => {
+    const ev = evaluationsMap[q.id] || { correct: false, feedback: "No feedback generated.", correct_answer: q.correct_answer };
+    const userAns = activeTest.answers[q.id] || "No Answer Provided";
+    const subjectLabel = q.subject_id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+    return `
+      <div class="tutor-test-result-card ${ev.correct ? 'correct' : 'incorrect'}">
+        <div class="tutor-test-result-header">
+          <span class="status-icon ${ev.correct ? 'correct' : 'incorrect'}">
+            ${ev.correct ? '✅ Correct' : '❌ Incorrect'}
+          </span>
+          <span style="opacity: 0.8; font-weight: 600;">Question ${idx + 1}</span>
+        </div>
+        
+        <div style="font-size: 14px; font-weight: 500; line-height: 1.5; white-space: pre-line;">
+          ${q.question_text}
+        </div>
+
+        <div style="display: flex; gap: 8px; font-size: 11px; margin-top: 6px;">
+          <span class="tutor-test-badge ${q.source_type}">${q.source_type === 'pyq' ? 'PYQ / Study Guide' : 'AI Generated'}</span>
+          <span style="opacity: 0.7; font-weight: 600; padding: 4px 0;">Subject: ${subjectLabel}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; background: rgba(0, 0, 0, 0.15); padding: 10px; border-radius: 6px; margin-top: 10px;">
+          <div>
+            <strong style="opacity: 0.8;">Your Answer:</strong>
+            <span style="font-weight: bold; color: ${ev.correct ? '#4ade80' : '#f87171'};">${userAns}</span>
+          </div>
+          <div>
+            <strong style="opacity: 0.8;">Correct Answer:</strong>
+            <span style="font-weight: bold; color: #4ade80;">${ev.correct_answer}</span>
+          </div>
+        </div>
+
+        <div style="font-size: 12px; line-height: 1.5; opacity: 0.9; border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 10px;">
+          <strong>Explanation:</strong> ${ev.feedback}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  tutorTestContainer.innerHTML = `
+    <div style="max-width: 650px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px; padding: 20px;">
+      <div style="text-align: center;">
+        <h2 style="margin: 0; color: var(--accent);">Mock Test Scorecard</h2>
+        <p style="font-size: 13px; opacity: 0.8; margin-top: 6px;">Mock Test completed successfully</p>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: center; gap: 30px; flex-wrap: wrap;">
+        <div class="tutor-test-score-circle">
+          <span class="tutor-test-score-value">${score} / 20</span>
+          <span class="tutor-test-score-label">Score</span>
+        </div>
+        
+        <div style="flex: 1; min-width: 250px;">
+          <h4 style="margin: 0 0 8px 0; color: var(--accent);">${percentage}% Correct Answers</h4>
+          <p style="font-size: 13px; line-height: 1.6; margin: 0; opacity: 0.9;">
+            ${feedbackMessage}
+          </p>
+        </div>
+      </div>
+
+      <!-- Action items -->
+      <div style="display: flex; gap: 16px; justify-content: stretch; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 16px 0;">
+        <button class="button quiet" id="retake-test-btn" style="flex: 1; min-height: 40px; font-weight: bold;">
+          Retake Test
+        </button>
+        <button class="button primary" id="exit-test-btn" style="flex: 1; min-height: 40px; font-weight: bold;">
+          Return to Chat
+        </button>
+      </div>
+
+      <!-- Detailed breakdown -->
+      <div>
+        <h4 style="margin: 0 0 12px 0;">Question-by-Question Review</h4>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          ${questionReviewsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Bind button actions
+  tutorTestContainer.querySelector('#retake-test-btn').addEventListener('click', () => {
+    activeTest = null;
+    renderTestSetup();
+  });
+
+  tutorTestContainer.querySelector('#exit-test-btn').addEventListener('click', () => {
+    testModeActive = false;
+    activeTest = null;
+    if (tutorModeToggle) {
+      tutorModeToggle.classList.remove("active");
+      tutorModeToggle.style.background = "";
+      tutorModeToggle.style.color = "";
+    }
+    if (tutorChatContainer) tutorChatContainer.hidden = false;
+    if (tutorTestContainer) tutorTestContainer.hidden = true;
   });
 }
 

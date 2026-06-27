@@ -23,6 +23,7 @@ load_dotenv()
 from src.database import DatabaseHelper
 from src.parser import get_curriculum_data_da, get_curriculum_data_cs, DSAI_GATE_DIR, CSE_GATE_DIR
 from src.agent.graph import tutor_agent, AgentState
+from src.agent.test_manager import generate_mock_test, evaluate_mock_test
 
 # Initialize SQLite database schemas on application startup
 DatabaseHelper.init_db()
@@ -458,3 +459,36 @@ async def tutor_chat(data: TutorChatInput):
             }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Tutor generation failed: {str(e)}")
+
+
+# === MOCK TEST APIs ===
+
+class TestStartInput(BaseModel):
+    paper: str
+    test_type: str  # "general" or "subject"
+    subjects: Optional[List[str]] = []
+
+
+class TestEvaluateInput(BaseModel):
+    questions: List[Dict]
+    answers: Dict[str, str]
+
+
+@app.post("/api/tutor/test/start")
+async def start_mock_test(data: TestStartInput):
+    """Generates a new 20-question mock test."""
+    try:
+        questions = generate_mock_test(data.paper, data.test_type, data.subjects)
+        return {"questions": questions}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Mock test generation failed: {str(e)}")
+
+
+@app.post("/api/tutor/test/evaluate")
+async def evaluate_test_submission(data: TestEvaluateInput):
+    """Grades and evaluates a mock test submission."""
+    try:
+        report = evaluate_mock_test(data.questions, data.answers)
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Mock test evaluation failed: {str(e)}")

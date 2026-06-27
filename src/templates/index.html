@@ -12,7 +12,7 @@
   <link rel="canonical" href="{{ pages_url }}">
   <title>{{ paper_title }}</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/styles.css?v=1.1.3">
+  <link rel="stylesheet" href="/static/styles.css?v=1.1.4">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Math and Markdown CDNs -->
@@ -326,13 +326,17 @@
   </section>
 
   <!-- Tutor Slide-out Panel -->
-  <aside class="notes-panel tutor-panel" id="tutor-panel" hidden style="grid-template-rows: auto minmax(0, 1fr) auto;">
+  <aside class="notes-panel tutor-panel" id="tutor-panel" hidden style="grid-template-rows: auto minmax(0, 1fr); gap: 10px;">
     <div class="notes-heading tutor-heading">
       <div>
         <span class="eyebrow" style="color: var(--accent); font-weight: 700;">GATE Study AI Tutor</span>
         <h3 id="tutor-topic-title" style="margin: 4px 0;">Topic Tutor</h3>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="button quiet" id="tutor-mode-toggle" style="display: none; align-items: center; gap: 6px; font-size: 11px; padding: 0 10px; min-height: 32px;" title="Switch to Mock Test Mode">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          <span>Mock Test</span>
+        </button>
         <button class="icon-button" id="tutor-fullscreen" aria-label="Toggle tutor fullscreen" style="opacity: 0.75;" title="Toggle Fullscreen">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
         </button>
@@ -340,22 +344,29 @@
       </div>
     </div>
     
-    <div class="tutor-chat-history" id="tutor-chat-history" style="overflow-y: auto; margin: 16px 0; padding: 4px; display: flex; flex-direction: column; gap: 16px;">
-      <!-- Chat bubbles loaded dynamically -->
-    </div>
-    
-    <form class="tutor-chat-input-area" id="tutor-chat-form" style="display: flex; flex-direction: column; gap: 10px;">
-      <textarea id="tutor-chat-input" placeholder="Ask a question about this topic..." required style="margin: 0; min-height: 80px;"></textarea>
-      <div class="notes-footer tutor-footer" style="display: flex; align-items: center; justify-content: space-between;">
-        <span id="tutor-status" style="font-size: 10px; color: var(--muted);">Ready</span>
-        <button class="button primary" type="submit" id="tutor-send-btn">Ask Tutor</button>
+    <!-- Chat Mode Body Container -->
+    <div id="tutor-chat-container" style="display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; height: 100%;">
+      <div class="tutor-chat-history" id="tutor-chat-history" style="overflow-y: auto; margin: 16px 0; padding: 4px; display: flex; flex-direction: column; gap: 16px;">
+        <!-- Chat bubbles loaded dynamically -->
       </div>
-    </form>
-  </aside>
+      
+      <form class="tutor-chat-input-area" id="tutor-chat-form" style="display: flex; flex-direction: column; gap: 10px;">
+        <textarea id="tutor-chat-input" placeholder="Ask a question about this topic..." required style="margin: 0; min-height: 80px;"></textarea>
+        <div class="notes-footer tutor-footer" style="display: flex; align-items: center; justify-content: space-between;">
+          <span id="tutor-status" style="font-size: 10px; color: var(--muted);">Ready</span>
+          <button class="button primary" type="submit" id="tutor-send-btn">Ask Tutor</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Mock Test Mode Body Container -->
+    <div id="tutor-test-container" hidden style="overflow-y: auto; height: 100%; display: flex; flex-direction: column; padding: 10px 0; gap: 16px;">
+      <!-- Populated dynamically via JS -->
+    </div>
 
 
   <!-- Syllabus Data for JavaScript to utilize -->
   <script id="syllabus-data" type="application/json">{{ subjects|tojson }}</script>
-  <script src="/static/app.js?v=1.1.3"></script>
+  <script src="/static/app.js?v=1.1.4"></script>
 </body>
 </html>
